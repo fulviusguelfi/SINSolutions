@@ -10,14 +10,16 @@ class Clientes extends CI_Controller {
         parent::__construct();
         $this->load->model(ClienteModel::class);
         $this->view_data = [];
+        $this->load->library('session');
     }
 
     public function salvar() {
         $this->load->helper('html');
         $this->load->helper('form');
+        $this->view_data['title'] = 'Alterar/Incluir Clientes';
         
         //gera novo registro
-        $this->view_data['cliente_fields'] = array_fill_keys(array_diff(ClienteModel::$fields, ClienteModel::$primary_key), null);
+        $this->view_data['cliente_fields'] = array_fill_keys(array_diff($this->ClienteModel->fields, $this->ClienteModel->primary_key), null);
         
         if ($this->input->method() == 'post') {
             if ($this->ClienteModel->save($this->input->post()) !== false) {
@@ -51,9 +53,8 @@ class Clientes extends CI_Controller {
             var_dump($this->uri->uri_to_assoc());
 //            pagination
         } else if ($this->input->method() == 'post') {
-            var_dump($this->uri->post());
-//            filter
-            $list = $this->ClienteModel->list($this->uri->post());
+            $this->__filter_session_persistence();
+            $list = $this->ClienteModel->list($this->session->last_filter);
         } else {
             $list = $this->ClienteModel->list();
         }
@@ -108,7 +109,7 @@ class Clientes extends CI_Controller {
     private function __save_anchor(array $key, $title = '', $attributes = []) {
         $this->load->helper('array');
         $this->load->helper('url');
-        $key = (empty($key) ? '' : $this->uri->assoc_to_uri(elements(ClienteModel::$primary_key, $key)));
+        $key = (empty($key) ? '' : $this->uri->assoc_to_uri(elements($this->ClienteModel->primary_key, $key)));
         $uri = "clientes/salvar/{$key}";
         return anchor($uri, $title, $attributes);
     }
@@ -116,7 +117,7 @@ class Clientes extends CI_Controller {
     private function __delete_anchor(array $key, $title = '', $attributes = []) {
         $this->load->helper('array');
         $this->load->helper('url');
-        $key = $this->uri->assoc_to_uri(elements(ClienteModel::$primary_key, $key));
+        $key = $this->uri->assoc_to_uri(elements($this->ClienteModel->primary_key, $key));
         $uri = "clientes/remover/{$key}";
         return anchor($uri, $title, $attributes);
     }
@@ -136,6 +137,12 @@ class Clientes extends CI_Controller {
                 unset($v[$key]);
             }
         });
+    }
+    
+    private function __filter_session_persistence() {
+        ($this->uri->post('clear_filter') !== null) ?
+                        $this->session->unset_userdata('last_filter') :
+                        $this->session->set_userdata('last_filter', $this->uri->post());
     }
 
 }

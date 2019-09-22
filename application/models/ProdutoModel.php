@@ -3,14 +3,14 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
- * Description of ClienteModel
+ * Description of ProdutoModel
  *
  * @author fulvius
  */
-class ClienteModel extends MY_Model {
+class ProdutoModel extends MY_Model {
 
     public function __construct() {
-        $this->table_name = 'cliente';
+        $this->table_name = 'produto';
         parent::__construct();
     }
 
