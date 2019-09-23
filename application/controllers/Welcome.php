@@ -2,7 +2,7 @@
 
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Welcome extends CI_Controller {
+class Welcome extends MY_Controller {
 
     public function __construct() {
         parent::__construct();
@@ -11,10 +11,11 @@ class Welcome extends CI_Controller {
     }
 
     public function index() {
+        $this->view_data['title'] = 'Bem vindo a SINSolutions';
 
-        $this->load->view('default/top');
-        $this->load->view('welcome/index');
-        $this->load->view('default/bottom');
+        $this->load->view('default/top', $this->view_data);
+        $this->load->view('welcome/index', $this->view_data);
+        $this->load->view('default/bottom', $this->view_data);
     }
 
 }

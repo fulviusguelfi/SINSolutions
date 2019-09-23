@@ -4,8 +4,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Pedidos extends MY_Controller {
 
-    private $view_data, $save_anchor, $delete_anchor;
-
     public function __construct() {
         parent::__construct();
         $this->load->model(PedidoModel::class);

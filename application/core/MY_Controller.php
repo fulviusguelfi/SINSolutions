@@ -13,6 +13,8 @@
  */
 class MY_Controller extends CI_Controller {
 
+    protected $view_data;
+
     protected function __delete_cols(&$array, array $cols) {
         array_walk($array, function (&$v) use ($cols) {
             foreach ($cols as $key) {
@@ -41,7 +43,7 @@ class MY_Controller extends CI_Controller {
         $this->load->model($model_name);
         $pk_arr = $this->$model_name->primary_key;
         $tmp_key = array_filter(elements($pk_arr, $key));
-        if(!empty($tmp_key))
+        if (!empty($tmp_key))
             $key = $tmp_key;
         $key = (empty($key) ? '' : $this->uri->assoc_to_uri($key));
         $uri .= DIRECTORY_SEPARATOR . $key;
