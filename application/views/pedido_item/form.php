@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') OR exit('No direct script access allowed');
+$this->load->view('default/menu');
 echo form_open();
 echo form_fieldset('Dados dos Itens do Pedido', []);
 $visual_order = array_intersect_key(array_fill_keys(['id', 'pedido_id', 'produto_id', 'qtd'], null), $pedido_item_fields);

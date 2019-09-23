@@ -1,5 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
+$this->load->view('default/menu');
 echo form_open();
 echo form_fieldset('Dados do Cliente', []);
 foreach ($cliente_fields as $key => $field) {
