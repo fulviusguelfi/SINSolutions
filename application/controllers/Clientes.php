@@ -2,7 +2,7 @@
 
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Clientes extends CI_Controller {
+class Clientes extends MY_Controller {
 
     private $view_data, $save_anchor, $delete_anchor;
 
@@ -15,6 +15,7 @@ class Clientes extends CI_Controller {
 
     public function salvar() {
         $this->load->helper('html');
+        $this->load->helper('url');
         $this->load->helper('form');
         $this->view_data['title'] = 'Alterar/Incluir Clientes';
 
@@ -29,10 +30,10 @@ class Clientes extends CI_Controller {
         } else if ($this->uri->total_segments() > 3) {
             $this->view_data['cliente_fields'] = $this->ClienteModel->select($this->uri->uri_to_assoc());
         }
-        $this->show_salvar();
+        $this->__show_salvar();
     }
 
-    public function show_salvar() {
+    private function __show_salvar() {
         $this->load->view('default/top', $this->view_data);
         $this->load->view('cliente/form', $this->view_data);
         $this->load->view('default/bottom', $this->view_data);
@@ -49,6 +50,8 @@ class Clientes extends CI_Controller {
 
     public function index() {
         $this->load->helper('html');
+        $this->view_data['title'] = 'Lista de Clientes';
+
         if ($this->uri->total_segments() > 3) {
             var_dump($this->uri->uri_to_assoc());
 //            pagination
@@ -59,13 +62,12 @@ class Clientes extends CI_Controller {
             $list = $this->ClienteModel->list();
         }
         log_message('debug', print_r($list, true));
-        $this->view_data['title'] = 'Lista de Clientes';
         $this->view_data['table'] = $this->__cliente_table($list);
         $this->view_data['comands'] = implode(str_repeat('&nbsp;', 1), $this->__cliente_comands());
-        $this->show_index();
+        $this->__show_index();
     }
 
-    private function show_index() {
+    private function __show_index() {
         $this->load->view('default/top', $this->view_data);
         $this->load->view('cliente/table', $this->view_data);
         $this->load->view('cliente/comands', $this->view_data);
@@ -73,13 +75,13 @@ class Clientes extends CI_Controller {
     }
 
     private function __cliente_comands() {
-        return array($this->__save_anchor([], 'Add', ['role' => 'buttom', 'class' => 'btn btn-info']));
+        return array($this->__anchor('ClienteModel', 'clientes/salvar', [], 'Add', ['role' => 'buttom', 'class' => 'btn btn-info']));
     }
 
     private function __cliente_table(array $list) {
         $this->load->library('table');
         $this->table->set_template([
-            'table_open' => '<table border="0" cellpadding="4" cellspacing="0">',
+            'table_open' => '<table border="1" cellpadding="4" cellspacing="0">',
             'thead_open' => '<thead>',
             'thead_close' => '</thead>',
             'heading_row_start' => '<tr>',
@@ -106,51 +108,13 @@ class Clientes extends CI_Controller {
         return $table;
     }
 
-    private function __save_anchor(array $key, $title = '', $attributes = []) {
-        $this->load->helper('array');
-        $this->load->helper('url');
-        $key = (empty($key) ? '' : $this->uri->assoc_to_uri(elements($this->ClienteModel->primary_key, $key)));
-        $uri = "clientes/salvar/{$key}";
-        return anchor($uri, $title, $attributes);
-    }
-
-    private function __delete_anchor(array $key, $title = '', $attributes = []) {
-        $this->load->helper('array');
-        $this->load->helper('url');
-        $key = $this->uri->assoc_to_uri(elements($this->ClienteModel->primary_key, $key));
-        $uri = "clientes/remover/{$key}";
-        return anchor($uri, $title, $attributes);
-    }
-
     private function __list_transformations(&$list) {
         array_walk($list, function(&$v, $k) {
-            $v['actions'] = $this->__save_anchor($v, 'Altera', ['role' => 'buttom', 'class' => 'btn btn-warning'])
+            $v['actions'] = $this->__anchor('ClienteModel', 'clientes/salvar', $v, 'Altera', ['role' => 'buttom', 'class' => 'btn btn-warning'])
                     . str_repeat('&nbsp;', 1)
-                    . $this->__delete_anchor($v, 'Remove', ['role' => 'buttom', 'class' => 'btn btn-danger']);
+                    . $this->__anchor('ClienteModel', 'clientes/remover', $v, 'Remove', ['role' => 'buttom', 'class' => 'btn btn-danger']);
         });
         return $list;
-    }
-
-    private function __delete_cols(&$array, array $cols) {
-        array_walk($array, function (&$v) use ($cols) {
-            foreach ($cols as $key) {
-                unset($v[$key]);
-            }
-        });
-    }
-
-    private function __filter_session_persistence() {
-        ($this->uri->post('clear_filter') !== null) ?
-                        $this->session->unset_userdata('last_filter') :
-                        $this->session->set_userdata('last_filter', $this->uri->post());
-    }
-
-    private function __load_obj(string $model_name, array $key_value): array {
-        if (!empty($model_name) && !empty($key_value)) {
-            $this->load->model($model_name);
-            $key_value = array_merge(array_fill_keys($this->$model_name->primary_key, null), $key_value);
-            return $this->$model_name->select($key_value);
-        }
     }
 
 }

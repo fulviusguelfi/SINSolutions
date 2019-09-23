@@ -2,7 +2,7 @@
 
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Pedido_itens extends CI_Controller {
+class Pedido_itens extends MY_Controller {
 
     private $view_data, $save_anchor, $delete_anchor;
 
@@ -15,6 +15,7 @@ class Pedido_itens extends CI_Controller {
 
     public function salvar() {
         $this->load->helper('html');
+        $this->load->helper('url');
         $this->load->helper('form');
         $this->view_data['title'] = 'Alterar/Incluir Item';
 
@@ -60,7 +61,7 @@ class Pedido_itens extends CI_Controller {
                     $this->view_data['pedido_item_fields']['pedido_id'] = $pedido['id'];
 
                     $cliente = $this->__load_obj('ClienteModel', ['id' => $pedido['cliente_id']]);
-                    $this->view_data['pedido_label'] = 'Pedido: '. $pedido['id'] . ' - Valor: ' . $pedido['total'] . ' - Cliente: ' . $cliente['nome'] . ' - Data: ' . $pedido['data'] ;
+                    $this->view_data['pedido_label'] = $pedido['id'] . ' - Valor: R$' . $pedido['total'] . ' - Cliente: ' . $cliente['nome'] . ' - Data: ' . $pedido['data'];
                 }
                 $pedido_itens = $this->PedidoItemModel->list_distinct($this->PedidoItemModel->fields, $pedido_item_search);
                 $this->view_data['table'] = $this->__pedido_item_table($pedido_itens);
@@ -101,39 +102,10 @@ class Pedido_itens extends CI_Controller {
         }
     }
 
-    public function index() {
-        $this->load->helper('html');
-        if ($this->uri->total_segments() > 3) {
-            var_dump($this->uri->uri_to_assoc());
-//            pagination
-        } else if ($this->input->method() == 'post') {
-            $this->__filter_session_persistence();
-            $list = $this->PedidoItemModel->list($this->session->last_filter);
-        } else {
-            $list = $this->PedidoItemModel->list();
-        }
-        log_message('debug', print_r($list, true));
-        $this->view_data['table'] = $this->__pedido_item_table($list);
-        $this->view_data['comands'] = implode(str_repeat('&nbsp;', 1), $this->__pedido_item_comands());
-        $this->view_data['title'] = 'Lista de Itens';
-        $this->show_index();
-    }
-
-    private function show_index() {
-        $this->load->view('default/top', $this->view_data);
-        $this->load->view('pedido_item/table', $this->view_data);
-        $this->load->view('pedido_item/comands', $this->view_data);
-        $this->load->view('default/bottom', $this->view_data);
-    }
-
-    private function __pedido_item_comands() {
-        return array($this->__save_anchor([], 'Add', ['role' => 'buttom', 'class' => 'btn btn-info']));
-    }
-
     private function __pedido_item_table(array $list) {
         $this->load->library('table');
         $this->table->set_template([
-            'table_open' => '<table border="0" cellpadding="4" cellspacing="0">',
+            'table_open' => '<table border="1" cellpadding="4" cellspacing="0">',
             'thead_open' => '<thead>',
             'thead_close' => '</thead>',
             'heading_row_start' => '<tr>',
@@ -160,24 +132,9 @@ class Pedido_itens extends CI_Controller {
         return $table;
     }
 
-    private function __save_anchor(array $key, $title = '', $attributes = []) {
-        $this->load->helper('array');
-        $this->load->helper('url');
-        $key = (empty($key) ? '' : $this->uri->assoc_to_uri(elements($this->PedidoModel->primary_key, $key)));
-    }
-
-    private function __delete_anchor(array $key, $title = '', $attributes = []) {
-        $this->load->helper('array');
-        $this->load->helper('url');
-        $this->load->model('PedidoModel');
-        $key = $this->uri->assoc_to_uri(elements($this->PedidoModel->primary_key, $key));
-        $uri = "pedido_itens/remover/{$key}";
-        return anchor($uri, $title, $attributes);
-    }
-
     private function __list_transformations(&$list) {
         array_walk($list, function(&$v, $k) {
-            $v['actions'] = $this->__delete_anchor($v, 'Remove', ['role' => 'buttom', 'class' => 'btn btn-danger']);
+            $v['actions'] = $this->__anchor('PedidoItemModel', 'pedido_itens/remover', $v, 'Remove', ['role' => 'buttom', 'class' => 'btn btn-danger']);
 
             $pedido = $this->__load_obj('PedidoModel', ['id' => $v['pedido_id']]);
             $cliente = $this->__load_obj('ClienteModel', ['id' => $pedido['cliente_id']]);
@@ -193,27 +150,4 @@ class Pedido_itens extends CI_Controller {
         });
         return $list;
     }
-
-    private function __delete_cols(&$array, array $cols) {
-        array_walk($array, function (&$v) use ($cols) {
-            foreach ($cols as $key) {
-                unset($v[$key]);
-            }
-        });
-    }
-
-    private function __filter_session_persistence() {
-        ($this->uri->post('clear_filter') !== null) ?
-                        $this->session->unset_userdata('last_filter') :
-                        $this->session->set_userdata('last_filter', $this->uri->post());
-    }
-
-    private function __load_obj(string $model_name, array $key_value): array {
-        if (!empty($model_name) && !empty($key_value)) {
-            $this->load->model($model_name);
-            $key_value = array_merge(array_fill_keys($this->$model_name->primary_key, null), $key_value);
-            return $this->$model_name->select($key_value);
-        }
-    }
-
 }
