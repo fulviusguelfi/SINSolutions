@@ -6,6 +6,9 @@
  * and open the template in the editor.
  */
 
+define('OPEN_TRANS', 1);
+define('CLOSE_TRANS', 2);
+
 /**
  * Description of MY_Model
  *
@@ -61,10 +64,13 @@ class MY_Model extends CI_Model {
         return $this->__row();
     }
 
-    public function save(array $data): bool {
+    public function save(array $data, int $transactional = 0): bool {
         $this->load->helper('array');
         $this->db->flush_cache();
         $retorno = false;
+        if ($transactional === OPEN_TRANS) {
+            $this->db->trans_start();
+        }
         if (empty(array_diff($this->update_key, array_keys($data)))) {
             $where = array_filter(elements($this->update_key, $data));
             $vals = array_diff($data, $where);
@@ -81,18 +87,35 @@ class MY_Model extends CI_Model {
             }
             log_message('info', 'Registro adicionado na tabela: ' . $this->table_name . ' novo id: ' . $this->db->insert_id());
         }
+        if ($transactional === CLOSE_TRANS) {
+            $this->db->trans_complete();
+            if ($this->db->trans_status() === FALSE) {
+                show_error('Erro na operação após '.$this->db->total_queries().' querys - Erro em: ' . $this->db->last_query() , 500, 'Erro na Base de dados');
+            }
+            log_message('info', 'Transação Completa');
+        }
         return $retorno;
     }
 
-    public function remove(array $data): bool {
+    public function remove(array $data, int $transactional = 0): bool {
         $this->load->helper('array');
-        $$$data = elements($this->remove_key, $data);
+        $data = elements($this->remove_key, $data);
         $this->db->flush_cache();
+        if ($transactional === OPEN_TRANS) {
+            $this->db->trans_start();
+        }
         $retorno = $this->db->delete($this->table_name, $data);
         if ($retorno === false) {
             show_error('Erro ao remover registro da tabela: ' . $this->table_name . ' com a primary key: ' . print_r($$$data, true), 500, 'Erro na Base de dados');
         }
         log_message('info', 'Registro removido com sucesso na tabela: ' . $this->table_name . ' dados: ' . print_r($data, true));
+        if ($transactional === CLOSE_TRANS) {
+            $this->db->trans_complete();
+            if ($this->db->trans_status() === FALSE) {
+                show_error('Erro na operação após '.$this->db->total_queries().' querys - Erro em: ' . $this->db->last_query() , 500, 'Erro na Base de dados');
+            }
+            log_message('info', 'Transação Completa');
+        }
         return $retorno;
     }
 
@@ -104,7 +127,7 @@ class MY_Model extends CI_Model {
 
     protected function __row(): array {
         $this->__execute_query();
-        return ($this->query->row_array()??[]);
+        return ($this->query->row_array() ?? []);
     }
 
     protected function __result(): array {

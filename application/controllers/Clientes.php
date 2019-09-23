@@ -17,10 +17,10 @@ class Clientes extends CI_Controller {
         $this->load->helper('html');
         $this->load->helper('form');
         $this->view_data['title'] = 'Alterar/Incluir Clientes';
-        
+
         //gera novo registro
         $this->view_data['cliente_fields'] = array_fill_keys(array_diff($this->ClienteModel->fields, $this->ClienteModel->primary_key), null);
-        
+
         if ($this->input->method() == 'post') {
             if ($this->ClienteModel->save($this->input->post()) !== false) {
                 $this->load->helper('url');
@@ -138,11 +138,19 @@ class Clientes extends CI_Controller {
             }
         });
     }
-    
+
     private function __filter_session_persistence() {
         ($this->uri->post('clear_filter') !== null) ?
                         $this->session->unset_userdata('last_filter') :
                         $this->session->set_userdata('last_filter', $this->uri->post());
+    }
+
+    private function __load_obj(string $model_name, array $key_value): array {
+        if (!empty($model_name) && !empty($key_value)) {
+            $this->load->model($model_name);
+            $key_value = array_merge(array_fill_keys($this->$model_name->primary_key, null), $key_value);
+            return $this->$model_name->select($key_value);
+        }
     }
 
 }

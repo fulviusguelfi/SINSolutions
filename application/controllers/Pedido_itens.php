@@ -22,17 +22,29 @@ class Pedido_itens extends CI_Controller {
         $this->view_data['produtos'] = array_column($this->ProdutoModel->list_distinct(['id', 'produto']), 'produto', 'id');
         $this->view_data['produto_id'] = [];
 
+        $this->session->set_flashdata('remove_redirect', $this->uri->uri_string());
+
         //gera novo registro
         $this->view_data['pedido_item_fields'] = array_fill_keys(array_diff($this->PedidoItemModel->fields, $this->PedidoItemModel->primary_key), null);
 
         if ($this->input->method() == 'post') {
-            if ($this->PedidoItemModel->save($this->input->post()) !== false) {
+            $produto = $this->__load_obj('ProdutoModel', ['id' => $this->input->post('produto_id')]);
+            $pedido = $this->__load_obj('PedidoModel', ['id' => $this->input->post('pedido_id')]);
+
+            //altera o valor total do pedido
+            $sub_total = (floatval($produto['valor_venda']) * (int) $this->input->post('qtd'));
+            $pedido['total'] = floatval($pedido['total']) + $sub_total;
+
+            $trans_result = ($this->PedidoItemModel->save($this->input->post(), OPEN_TRANS) &&
+                    $this->PedidoModel->save($pedido, CLOSE_TRANS));
+            if ($trans_result !== false) {
+
                 $this->load->helper('url');
-                redirect('pedido_itens/salvar');
+                redirect($this->uri->uri_string());
+//                redirect('pedido_itens/salvar');
             }
         } else if ($this->uri->total_segments() > 3) {
             $this->load->helper('array');
-            $this->load->model('PedidoModel');
             //criterio de busca
             $pedido_item_search = $this->uri->uri_to_assoc();
             if (empty(elements($this->PedidoItemModel->primary_key, array_keys($pedido_item_search)))) {
@@ -41,20 +53,17 @@ class Pedido_itens extends CI_Controller {
                 $this->view_data['pedido_item_fields'] = $pedido_item;
             } else {
                 //busca lista por pedido_id
+                $this->load->model('PedidoModel');
                 $pedido_key_name = $this->PedidoModel->table_name . '_id';
                 if (!empty($pedido_item_search[$pedido_key_name])) {
-                    $pedido = ['id' => $pedido_item_search[$pedido_key_name]];
-                    $this->load->model('PedidoModel');
-                    $pedido = $this->PedidoModel->select($pedido);
+                    $pedido = $this->__load_obj('PedidoModel', ['id' => $pedido_item_search[$pedido_key_name]]);
                     $this->view_data['pedido_item_fields']['pedido_id'] = $pedido['id'];
-                    $this->load->model('ClienteModel');
-                    $cliente = $this->ClienteModel->select(['id' => $pedido['cliente_id']]);
+
+                    $cliente = $this->__load_obj('ClienteModel', ['id' => $pedido['cliente_id']]);
                     $this->view_data['pedido_label'] = $pedido['id'] . ' - ' . $pedido['data'] . ' - ' . $cliente['nome'];
                 }
                 $pedido_itens = $this->PedidoItemModel->list_distinct($this->PedidoItemModel->fields, $pedido_item_search);
-                if (!empty($pedido_itens)) {
-                    $this->view_data['table'] = $this->__pedido_item_table($pedido_itens);
-                }
+                $this->view_data['table'] = $this->__pedido_item_table($pedido_itens);
             }
         }
         $this->show_salvar();
@@ -69,9 +78,25 @@ class Pedido_itens extends CI_Controller {
 
     public function remover() {
         if ($this->uri->total_segments() > 3) {
-            if ($this->PedidoItemModel->remove($this->uri->uri_to_assoc()) !== false) {
+
+            $pedido_item = $this->__load_obj('PedidoItemModel', $this->uri->uri_to_assoc());
+            $produto = $this->__load_obj('ProdutoModel', ['id' => $pedido_item['produto_id']]);
+            $pedido = $this->__load_obj('PedidoModel', ['id' => $pedido_item['pedido_id']]);
+
+            //altera o valor total do pedido
+            $sub_total = (floatval($produto['valor_venda']) * (int) $pedido_item['qtd']);
+            $pedido['total'] = floatval($pedido['total']) - $sub_total;
+
+            $trans_result = ($this->PedidoModel->save($pedido, OPEN_TRANS) &&
+                    $this->PedidoItemModel->remove($this->uri->uri_to_assoc(), CLOSE_TRANS));
+            if ($trans_result !== false) {
                 $this->load->helper('url');
-                redirect('pedido_itens/salvar');
+                if ($this->session->flashdata('remove_redirect') !== null) {
+                    $this->session->keep_flashdata('remove_redirect');
+                    redirect($this->session->flashdata('remove_redirect'));
+                } else {
+                    redirect('pedido_itens');
+                }
             }
         }
     }
@@ -90,7 +115,7 @@ class Pedido_itens extends CI_Controller {
         log_message('debug', print_r($list, true));
         $this->view_data['table'] = $this->__pedido_item_table($list);
         $this->view_data['comands'] = implode(str_repeat('&nbsp;', 1), $this->__pedido_item_comands());
-        $this->view_data['title'] = 'Lista de Pedidos';
+        $this->view_data['title'] = 'Lista de Itens';
         $this->show_index();
     }
 
@@ -144,34 +169,27 @@ class Pedido_itens extends CI_Controller {
     private function __delete_anchor(array $key, $title = '', $attributes = []) {
         $this->load->helper('array');
         $this->load->helper('url');
+        $this->load->model('PedidoModel');
         $key = $this->uri->assoc_to_uri(elements($this->PedidoModel->primary_key, $key));
-        $uri = "pedidos/remover/{$key}";
+        $uri = "pedido_itens/remover/{$key}";
         return anchor($uri, $title, $attributes);
     }
 
     private function __list_transformations(&$list) {
-        $this->load->model('ClienteModel');
-        $this->load->model('PedidoModel');
-        $this->load->model('ProdutoModel');
         array_walk($list, function(&$v, $k) {
-            $pedido = $this->PedidoModel->select(['id' => $v['pedido_id']]);
-            $cliente = $this->ClienteModel->select(['id' => $pedido['cliente_id']]);
+            $v['actions'] = $this->__delete_anchor($v, 'Remove', ['role' => 'buttom', 'class' => 'btn btn-danger']);
+
+            $pedido = $this->__load_obj('PedidoModel', ['id' => $v['pedido_id']]);
+            $cliente = $this->__load_obj('ClienteModel', ['id' => $pedido['cliente_id']]);
             $v['pedido_id'] = $pedido['id'] . ' - ' . $pedido['data'] . ' - ' . $cliente['nome'];
 
-            $produto = $this->ProdutoModel->select(['id' => $v['produto_id']]);
+            $produto = $this->__load_obj('ProdutoModel', ['id' => $v['produto_id']]);
             $v['produto_id'] = $v['produto_id'] . ' - ' . $produto['produto'];
 
             $v['sub_total'] = ((int) $v['qtd']) * floatval($produto['valor_venda']);
 
-            $v['actions'] = $this->__delete_anchor($v, 'Remove', ['role' => 'buttom', 'class' => 'btn btn-danger']);
-
             $visual_order = array_fill_keys(['pedido_id', 'produto_id', 'qtd', 'sub_total', 'actions'], null);
             $v = array_merge($visual_order, $v);
-
-
-//            $v['actions'] = $this->__save_anchor($v, 'Altera', ['role' => 'buttom', 'class' => 'btn btn-warning'])
-//                    . str_repeat('&nbsp;', 1)
-//                    . $this->__delete_anchor($v, 'Remove', ['role' => 'buttom', 'class' => 'btn btn-danger']);
         });
         return $list;
     }
@@ -188,6 +206,14 @@ class Pedido_itens extends CI_Controller {
         ($this->uri->post('clear_filter') !== null) ?
                         $this->session->unset_userdata('last_filter') :
                         $this->session->set_userdata('last_filter', $this->uri->post());
+    }
+
+    private function __load_obj(string $model_name, array $key_value): array {
+        if (!empty($model_name) && !empty($key_value)) {
+            $this->load->model($model_name);
+            $key_value = array_merge(array_fill_keys($this->$model_name->primary_key, null), $key_value);
+            return $this->$model_name->select($key_value);
+        }
     }
 
 }

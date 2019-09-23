@@ -31,8 +31,7 @@ class Pedidos extends CI_Controller {
                 redirect('pedidos');
             }
         } else if ($this->uri->total_segments() > 3) {
-            $pedido_id = $this->uri->uri_to_assoc();
-            $pedido = $this->PedidoModel->select($pedido_id);
+            $pedido = $this->PedidoModel->select($this->uri->uri_to_assoc());
             $this->view_data['cliente_id'] = $pedido['cliente_id'];
             $this->view_data['pedido_fields'] = $pedido;
         }
@@ -106,12 +105,12 @@ class Pedidos extends CI_Controller {
             'table_close' => '</table>'
         ]);
 
-        $this->table->set_heading('Pedido', 'Cliente', 'Data','Total do Pedido', 'Ações');
+        $this->table->set_heading('Pedido', 'Cliente', 'Data', 'Total do Pedido', 'Ações');
         $this->__list_transformations($list);
         $table = $this->table->generate($list);
         return $table;
     }
-    
+
     private function __list_itens_anchor(array $key, $title = '', $attributes = []) {
         $this->load->helper('array');
         $this->load->helper('url');
@@ -119,7 +118,6 @@ class Pedidos extends CI_Controller {
         $uri = "pedido_itens/salvar/{$key}";
         return anchor($uri, $title, $attributes);
     }
-
 
     private function __save_anchor(array $key, $title = '', $attributes = []) {
         $this->load->helper('array');
@@ -138,9 +136,8 @@ class Pedidos extends CI_Controller {
     }
 
     private function __list_transformations(&$list) {
-        $this->load->model('ClienteModel');
         array_walk($list, function(&$v, $k) {
-            $cliente = $this->ClienteModel->select(['id' => $v['cliente_id']]);
+            $cliente = $this->__load_obj('ClienteModel', ['id' => $v['cliente_id']]);
             $v['cliente_id'] = $v['cliente_id'] . ' - ' . $cliente['nome'];
             $v['actions'] = $this->__list_itens_anchor(['pedido_id' => $v['id']], 'Itens', ['role' => 'buttom', 'class' => 'btn btn-warning'])
                     . str_repeat('&nbsp;', 1)
@@ -161,6 +158,14 @@ class Pedidos extends CI_Controller {
         ($this->uri->post('clear_filter') !== null) ?
                         $this->session->unset_userdata('last_filter') :
                         $this->session->set_userdata('last_filter', $this->uri->post());
+    }
+
+    private function __load_obj(string $model_name, array $key_value): array {
+        if (!empty($model_name) && !empty($key_value)) {
+            $this->load->model($model_name);
+            $key_value = array_merge(array_fill_keys($this->$model_name->primary_key, null), $key_value);
+            return $this->$model_name->select($key_value);
+        }
     }
 
 }
