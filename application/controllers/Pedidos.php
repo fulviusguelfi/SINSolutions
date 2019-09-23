@@ -39,9 +39,9 @@ class Pedidos extends CI_Controller {
     }
 
     public function show_salvar() {
-        $this->load->view('pedido/table_top', $this->view_data);
+        $this->load->view('default/top', $this->view_data);
         $this->load->view('pedido/form', $this->view_data);
-        $this->load->view('pedido/table_bottom', $this->view_data);
+        $this->load->view('default/bottom', $this->view_data);
     }
 
     public function remover() {
@@ -72,10 +72,10 @@ class Pedidos extends CI_Controller {
     }
 
     private function show_index() {
-        $this->load->view('pedido/table_top', $this->view_data);
+        $this->load->view('default/top', $this->view_data);
         $this->load->view('pedido/table', $this->view_data);
         $this->load->view('pedido/comands', $this->view_data);
-        $this->load->view('pedido/table_bottom', $this->view_data);
+        $this->load->view('default/bottom', $this->view_data);
     }
 
     private function __pedido_comands() {

@@ -60,7 +60,7 @@ class Pedido_itens extends CI_Controller {
                     $this->view_data['pedido_item_fields']['pedido_id'] = $pedido['id'];
 
                     $cliente = $this->__load_obj('ClienteModel', ['id' => $pedido['cliente_id']]);
-                    $this->view_data['pedido_label'] = $pedido['id'] . ' - ' . $pedido['data'] . ' - ' . $cliente['nome'];
+                    $this->view_data['pedido_label'] = 'Pedido: '. $pedido['id'] . ' - Valor: ' . $pedido['total'] . ' - Cliente: ' . $cliente['nome'] . ' - Data: ' . $pedido['data'] ;
                 }
                 $pedido_itens = $this->PedidoItemModel->list_distinct($this->PedidoItemModel->fields, $pedido_item_search);
                 $this->view_data['table'] = $this->__pedido_item_table($pedido_itens);
@@ -70,10 +70,10 @@ class Pedido_itens extends CI_Controller {
     }
 
     public function show_salvar() {
-        $this->load->view('pedido_item/table_top', $this->view_data);
+        $this->load->view('default/top', $this->view_data);
         $this->load->view('pedido_item/form', $this->view_data);
         $this->load->view('pedido_item/table', $this->view_data);
-        $this->load->view('pedido_item/table_bottom', $this->view_data);
+        $this->load->view('default/bottom', $this->view_data);
     }
 
     public function remover() {
@@ -120,10 +120,10 @@ class Pedido_itens extends CI_Controller {
     }
 
     private function show_index() {
-        $this->load->view('pedido_item/table_top', $this->view_data);
+        $this->load->view('default/top', $this->view_data);
         $this->load->view('pedido_item/table', $this->view_data);
         $this->load->view('pedido_item/comands', $this->view_data);
-        $this->load->view('pedido_item/table_bottom', $this->view_data);
+        $this->load->view('default/bottom', $this->view_data);
     }
 
     private function __pedido_item_comands() {

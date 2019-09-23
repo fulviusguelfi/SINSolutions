@@ -33,9 +33,9 @@ class Produtos extends CI_Controller {
     }
 
     public function show_salvar() {
-        $this->load->view('produto/table_top', $this->view_data);
+        $this->load->view('default/top', $this->view_data);
         $this->load->view('produto/form', $this->view_data);
-        $this->load->view('produto/table_bottom', $this->view_data);
+        $this->load->view('default/bottom', $this->view_data);
     }
 
     public function remover() {

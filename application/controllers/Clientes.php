@@ -33,9 +33,9 @@ class Clientes extends CI_Controller {
     }
 
     public function show_salvar() {
-        $this->load->view('cliente/table_top', $this->view_data);
+        $this->load->view('default/top', $this->view_data);
         $this->load->view('cliente/form', $this->view_data);
-        $this->load->view('cliente/table_bottom', $this->view_data);
+        $this->load->view('default/bottom', $this->view_data);
     }
 
     public function remover() {
@@ -66,10 +66,10 @@ class Clientes extends CI_Controller {
     }
 
     private function show_index() {
-        $this->load->view('cliente/table_top', $this->view_data);
+        $this->load->view('default/top', $this->view_data);
         $this->load->view('cliente/table', $this->view_data);
         $this->load->view('cliente/comands', $this->view_data);
-        $this->load->view('cliente/table_bottom', $this->view_data);
+        $this->load->view('default/bottom', $this->view_data);
     }
 
     private function __cliente_comands() {
