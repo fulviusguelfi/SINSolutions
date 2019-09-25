@@ -18,7 +18,7 @@ class Produtos extends MY_Controller {
         $this->view_data['title'] = 'Alterar/Incluir Produtos';
 
         //gera novo registro
-        $this->view_data['produto_fields'] = array_fill_keys(array_diff($this->ProdutoModel->fields, $this->ProdutoModel->primary_key), null);
+        $this->view_data['produto_fields'] = array_fill_keys(array_diff($this->ProdutoModel->fields, $this->ProdutoModel->primary_key()), null);
 
         if ($this->input->method() == 'post') {
             if ($this->ProdutoModel->save($this->input->post()) !== false) {

@@ -24,7 +24,7 @@ class Pedido_itens extends MY_Controller {
         $this->session->set_flashdata('remove_redirect', $this->uri->uri_string());
 
         //gera novo registro
-        $this->view_data['pedido_item_fields'] = array_fill_keys(array_diff($this->PedidoItemModel->fields, $this->PedidoItemModel->primary_key), null);
+        $this->view_data['pedido_item_fields'] = array_fill_keys(array_diff($this->PedidoItemModel->fields, $this->PedidoItemModel->primary_key()), null);
 
         if ($this->input->method() == 'post') {
             $produto = $this->__load_obj('ProdutoModel', ['id' => $this->input->post('produto_id')]);
@@ -46,7 +46,7 @@ class Pedido_itens extends MY_Controller {
             $this->load->helper('array');
             //criterio de busca
             $pedido_item_search = $this->uri->uri_to_assoc();
-            if (empty(elements($this->PedidoItemModel->primary_key, array_keys($pedido_item_search)))) {
+            if (empty(elements($this->PedidoItemModel->primary_key(), array_keys($pedido_item_search)))) {
                 //busca selecionado
                 $pedido_item = $this->PedidoItemModel->select($pedido_item_search);
                 $this->view_data['pedido_item_fields'] = $pedido_item;

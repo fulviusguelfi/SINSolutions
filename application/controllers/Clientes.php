@@ -18,7 +18,7 @@ class Clientes extends MY_Controller {
         $this->view_data['title'] = 'Alterar/Incluir Clientes';
 
         //gera novo registro
-        $this->view_data['cliente_fields'] = array_fill_keys(array_diff($this->ClienteModel->fields, $this->ClienteModel->primary_key), null);
+        $this->view_data['cliente_fields'] = array_fill_keys(array_diff($this->ClienteModel->fields, $this->ClienteModel->primary_key()), null);
 
         if ($this->input->method() == 'post') {
             if ($this->ClienteModel->save($this->input->post()) !== false) {

@@ -22,7 +22,7 @@ class Pedidos extends MY_Controller {
         $this->view_data['cliente_id'] = [];
 
         //gera novo registro
-        $this->view_data['pedido_fields'] = array_fill_keys(array_diff($this->PedidoModel->fields, $this->PedidoModel->primary_key), null);
+        $this->view_data['pedido_fields'] = array_fill_keys(array_diff($this->PedidoModel->fields, $this->PedidoModel->primary_key()), null);
 
         if ($this->input->method() == 'post') {
             if ($this->PedidoModel->save($this->input->post()) !== false) {
@@ -54,6 +54,9 @@ class Pedidos extends MY_Controller {
 
     public function index() {
         $this->load->helper('html');
+        
+        $this->load->join_model($this->PedidoModel, 'pedido.cliente_id = cliente.id', 'ClienteModel');
+        
         if ($this->uri->total_segments() > 3) {
             var_dump($this->uri->uri_to_assoc());
 //            pagination
@@ -62,6 +65,8 @@ class Pedidos extends MY_Controller {
             $list = $this->PedidoModel->list($this->session->last_filter);
         } else {
             $list = $this->PedidoModel->list();
+//            print_r($this->PedidoModel->db->last_query());
+//            die;
         }
         log_message('debug', print_r($list, true));
         $this->view_data['title'] = 'Lista de Pedidos';
