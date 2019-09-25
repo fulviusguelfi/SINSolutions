@@ -153,9 +153,18 @@ class MY_Model extends CI_Model {
                 unset($fields_data[array_search($pk, $f)]);
             }
             foreach ($fields_data as $value) {
-                $this->table_fields[] = $table . '.' . $value->name;
+                $this->table_fields[] = $this->get_table_fild_name($table, $value->name);
             }
         }
+    }
+    
+    public function get_table_fild_name($table, $field){
+        return $table.'.'.$field;
+    }
+
+
+    public function get_table_fields(){
+        return $this->table_fields;
     }
 
 }

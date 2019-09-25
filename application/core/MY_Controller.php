@@ -49,5 +49,10 @@ class MY_Controller extends CI_Controller {
         $uri .= DIRECTORY_SEPARATOR . $key;
         return anchor($uri, $title, $attributes);
     }
+    
+    protected function __set_table_order(array $order, array $data){
+        $visual_order = array_fill_keys($order, null);
+            return array_merge($visual_order, $data);
+    }
 
 }

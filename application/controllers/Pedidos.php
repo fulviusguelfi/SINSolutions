@@ -109,19 +109,22 @@ class Pedidos extends MY_Controller {
             'table_close' => '</table>'
         ]);
 
-        $this->table->set_heading('Pedido', 'Cliente', 'Data', 'Total do Pedido', 'Ações');
+        $this->table->set_heading('Pedido', 'Cliente', 'Email', 'Data', 'Total do Pedido', 'Ações');
         $this->__list_transformations($list);
+        $this->__delete_cols($list, ['nome']);
         $table = $this->table->generate($list);
         return $table;
     }
 
     private function __list_transformations(&$list) {
         array_walk($list, function(&$v, $k) {
-            $cliente = $this->__load_obj('ClienteModel', ['id' => $v['cliente_id']]);
-            $v['cliente_id'] = $v['cliente_id'] . ' - ' . $cliente['nome'];
+//            $cliente = $this->__load_obj('ClienteModel', ['id' => $v['cliente_id']]);
+            $v['cliente_id'] = $v['cliente_id'] . ' - ' . $v['nome'];
             $v['actions'] = $this->__anchor('PedidoItemModel', 'pedido_itens/salvar', ['pedido_id' => $v['id']], 'Itens', ['role' => 'buttom', 'class' => 'btn btn-warning'])
                     . str_repeat('&nbsp;', 1)
                     . $this->__anchor('PedidoModel', 'pedidos/remover', $v, 'Remove', ['role' => 'buttom', 'class' => 'btn btn-danger']);
+            
+            $v = $this->__set_table_order(['id', 'cliente_id', 'email','data', 'total', 'actions'], $v);
         });
         return $list;
     }

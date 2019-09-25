@@ -61,7 +61,12 @@ class Pedido_itens extends MY_Controller {
                     $cliente = $this->__load_obj('ClienteModel', ['id' => $pedido['cliente_id']]);
                     $this->view_data['pedido_label'] = $pedido['id'] . ' - Valor: R$' . $pedido['total'] . ' - Cliente: ' . $cliente['nome'] . ' - Data: ' . $pedido['data'];
                 }
-                $pedido_itens = $this->PedidoItemModel->list_distinct($this->PedidoItemModel->fields, $pedido_item_search);
+                
+                $this->load->join_model($this->PedidoItemModel, 'pedido_item.pedido_id = pedido.id', 'PedidoModel');
+                $this->load->join_model($this->PedidoItemModel, 'pedido_item.produto_id = produto.id', 'ProdutoModel');
+                $this->load->join_model($this->PedidoItemModel, 'pedido.cliente_id = cliente.id', 'ClienteModel');
+                
+                $pedido_itens = $this->PedidoItemModel->list_distinct($this->PedidoItemModel->get_table_fields(), $pedido_item_search);
                 $this->view_data['table'] = $this->__pedido_item_table($pedido_itens);
             }
         }
@@ -142,10 +147,15 @@ class Pedido_itens extends MY_Controller {
             $v['produto_id'] = $v['produto_id'] . ' - ' . $produto['produto'];
 
             $v['sub_total'] = ((int) $v['qtd']) * floatval($produto['valor_venda']);
+            echo '<pre>';
+            print_r($v);
+            echo '</pre>';
 
-            $visual_order = array_fill_keys(['pedido_id', 'produto_id', 'qtd', 'sub_total', 'actions'], null);
-            $v = array_merge($visual_order, $v);
+            $v = $this->__set_table_order(['pedido_id', 'produto_id', 'qtd', 'sub_total', 'actions'], $v);
+            
         });
         return $list;
     }
+    
+    
 }
