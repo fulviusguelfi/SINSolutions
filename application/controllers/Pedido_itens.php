@@ -107,30 +107,11 @@ class Pedido_itens extends MY_Controller {
 
     private function __pedido_item_table(array $list) {
         $this->load->library('table');
-        $this->table->set_template([
-            'table_open' => '<table border="1" cellpadding="4" cellspacing="0">',
-            'thead_open' => '<thead>',
-            'thead_close' => '</thead>',
-            'heading_row_start' => '<tr>',
-            'heading_row_end' => '</tr>',
-            'heading_cell_start' => '<th>',
-            'heading_cell_end' => '</th>',
-            'tbody_open' => '<tbody>',
-            'tbody_close' => '</tbody>',
-            'row_start' => '<tr>',
-            'row_end' => '</tr>',
-            'cell_start' => '<td>',
-            'cell_end' => '</td>',
-            'row_alt_start' => '<tr>',
-            'row_alt_end' => '</tr>',
-            'cell_alt_start' => '<td>',
-            'cell_alt_end' => '</td>',
-            'table_close' => '</table>'
-        ]);
+        $this->table->set_template($this->get_table_template());
 
-        $this->table->set_heading('Pedido / Data / Cliente', 'Produto', 'Quantidade', 'Sub-Total', 'Ações');
+        $this->table->set_heading('Pedido' , 'Data' , 'Cliente', 'Produto', 'Quantidade', 'Valor', 'Sub-Total', 'Ações');
         $this->__list_transformations($list);
-        $this->__delete_cols($list, ['id']);
+        $this->__delete_cols($list, ['id', 'total', 'produto_id', 'email', 'cliente_id']);
         $table = $this->table->generate($list);
         return $table;
     }
@@ -138,20 +119,9 @@ class Pedido_itens extends MY_Controller {
     private function __list_transformations(&$list) {
         array_walk($list, function(&$v, $k) {
             $v['actions'] = $this->__anchor('PedidoItemModel', 'pedido_itens/remover', $v, 'Remove', ['role' => 'buttom', 'class' => 'btn btn-danger']);
+            $v['sub_total'] = ((int) $v['qtd']) * floatval($v['valor_venda']);
 
-            $pedido = $this->__load_obj('PedidoModel', ['id' => $v['pedido_id']]);
-            $cliente = $this->__load_obj('ClienteModel', ['id' => $pedido['cliente_id']]);
-            $v['pedido_id'] = $pedido['id'] . ' - ' . $pedido['data'] . ' - ' . $cliente['nome'];
-
-            $produto = $this->__load_obj('ProdutoModel', ['id' => $v['produto_id']]);
-            $v['produto_id'] = $v['produto_id'] . ' - ' . $produto['produto'];
-
-            $v['sub_total'] = ((int) $v['qtd']) * floatval($produto['valor_venda']);
-            echo '<pre>';
-            print_r($v);
-            echo '</pre>';
-
-            $v = $this->__set_table_order(['pedido_id', 'produto_id', 'qtd', 'sub_total', 'actions'], $v);
+            $v = $this->__set_table_order(['pedido_id', 'data', 'nome', 'produto', 'qtd', 'valor_venda', 'sub_total', 'actions'], $v);
             
         });
         return $list;
